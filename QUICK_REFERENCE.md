@@ -68,6 +68,21 @@ docker compose exec postgres pg_dump -U ozbargain_user ozbargain_monitor > backu
 docker compose exec -T postgres psql -U ozbargain_user -d ozbargain_monitor < backup.sql
 ```
 
+### Data Cleanup
+```bash
+# Setup automatic weekly cleanup
+./setup_cron.sh
+
+# Manual cleanup (any day)
+./manual_cleanup.sh
+
+# View cleanup logs
+tail -f /var/log/ozbargain_cleanup.log
+
+# Check cron jobs
+crontab -l
+```
+
 ## 🔗 Important URLs
 - **Web Interface**: http://localhost:5000
 - **Health Check**: http://localhost:5000/health

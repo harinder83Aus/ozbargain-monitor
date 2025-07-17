@@ -196,6 +196,33 @@ docker-compose ps
 docker-compose down
 ```
 
+## Data Cleanup
+
+The system includes automated weekly cleanup to maintain optimal performance:
+
+### Quick Setup
+```bash
+# Install automatic weekly cleanup (runs every Sunday at 11 PM)
+./setup_cron.sh
+
+# Manual cleanup (for testing)
+./manual_cleanup.sh
+```
+
+### Cleanup Strategy
+- **Preserves**: Sunday data as weekly reference points
+- **Removes**: Monday-Saturday data from previous week
+- **Backup**: Creates compressed backup before each cleanup
+- **Schedule**: Every Sunday at 11 PM
+
+### Files
+- `cleanup.sh` - Main cleanup script
+- `setup_cron.sh` - Install automated cleanup
+- `manual_cleanup.sh` - Manual cleanup for testing
+- `CLEANUP_GUIDE.md` - Detailed cleanup documentation
+
+See [CLEANUP_GUIDE.md](CLEANUP_GUIDE.md) for complete documentation.
+
 ## License
 
 This project is for educational purposes. Please respect OzBargain's terms of service and server resources.

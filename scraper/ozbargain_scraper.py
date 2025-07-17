@@ -90,6 +90,35 @@ class OzBargainScraper:
                 except:
                     pass
             
+            # Try to detect expiry information from title
+            expiry_date = None
+            
+            # Check if deal is marked as expired in title
+            if '(expired)' in title.lower() or 'expired' in title.lower():
+                # If deal is marked as expired, set expiry to past date
+                from datetime import timedelta
+                expiry_date = datetime.utcnow() - timedelta(days=1)
+            else:
+                # Try to extract expiry date patterns from title/description
+                # Look for patterns like "expires 25/07/2025", "until 31 Dec", etc.
+                import re
+                expiry_patterns = [
+                    r'expires?\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})',
+                    r'until\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})',
+                    r'ends?\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})',
+                    r'valid\s+until\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})'
+                ]
+                
+                full_text = f"{title} {description}".lower()
+                for pattern in expiry_patterns:
+                    match = re.search(pattern, full_text, re.IGNORECASE)
+                    if match:
+                        try:
+                            expiry_date = date_parser.parse(match.group(1))
+                            break
+                        except:
+                            continue
+            
             # Extract additional information from description HTML
             soup = BeautifulSoup(description, 'html.parser')
             
@@ -151,6 +180,7 @@ class OzBargainScraper:
                 'votes': votes,
                 'comments_count': comments_count,
                 'deal_date': deal_date,
+                'expiry_date': expiry_date,
                 'is_active': True
             }
             

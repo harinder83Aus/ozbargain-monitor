@@ -63,5 +63,20 @@ services:
       timeout: 10s
       retries: 3
 
+  matcher:
+    build:
+      context: ./matcher
+      dockerfile: Dockerfile
+    container_name: ozbargain_matcher
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://ozbargain_user:ozbargain_password@postgres:5432/ozbargain_monitor
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    volumes:
+      - ./matcher:/app
+
 volumes:
   postgres_data:

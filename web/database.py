@@ -77,14 +77,30 @@ class DatabaseManager:
     def get_recent_deals(self, limit=50):
         session = self.get_session()
         try:
-            return session.query(Deal).filter(Deal.is_active == True).order_by(desc(Deal.created_at)).limit(limit).all()
+            from datetime import datetime
+            return session.query(Deal).filter(
+                Deal.is_active == True,
+                ~Deal.title.ilike('%expired%'),  # Exclude deals marked as expired
+                ~Deal.title.ilike('%(expired)%'),  # Also exclude deals with (expired) pattern
+                (Deal.expiry_date.is_(None)) | (Deal.expiry_date > datetime.utcnow())  # Exclude past expiry dates
+            ).order_by(desc(Deal.created_at)).limit(limit).all()
         finally:
             session.close()
     
     def get_matched_deals(self, search_term_id=None, limit=50):
         session = self.get_session()
         try:
-            query = session.query(Deal).join(SearchMatch).filter(Deal.is_active == True)
+            query = session.query(Deal).join(SearchMatch).filter(
+                Deal.is_active == True,
+                ~Deal.title.ilike('%expired%'),  # Exclude deals marked as expired
+                ~Deal.title.ilike('%(expired)%')  # Also exclude deals with (expired) pattern
+            )
+            
+            # Also exclude deals with expiry_date in the past
+            from datetime import datetime
+            query = query.filter(
+                (Deal.expiry_date.is_(None)) | (Deal.expiry_date > datetime.utcnow())
+            )
             
             if search_term_id:
                 query = query.filter(SearchMatch.search_term_id == search_term_id)
@@ -162,9 +178,58 @@ class DatabaseManager:
         try:
             stats = {}
             stats['total_deals'] = session.query(Deal).count()
-            stats['active_deals'] = session.query(Deal).filter(Deal.is_active == True).count()
+            
+            # Active deals (excluding expired ones)
+            from datetime import datetime
+            stats['active_deals'] = session.query(Deal).filter(
+                Deal.is_active == True,
+                ~Deal.title.ilike('%expired%'),
+                ~Deal.title.ilike('%(expired)%'),
+                (Deal.expiry_date.is_(None)) | (Deal.expiry_date > datetime.utcnow())
+            ).count()
+            
             stats['search_terms'] = session.query(SearchTerm).filter(SearchTerm.is_active == True).count()
-            stats['matched_deals'] = session.query(SearchMatch).count()
+            
+            # Matched deals (excluding expired ones)
+            stats['matched_deals'] = session.query(SearchMatch).join(Deal).filter(
+                Deal.is_active == True,
+                ~Deal.title.ilike('%expired%'),
+                ~Deal.title.ilike('%(expired)%'),
+                (Deal.expiry_date.is_(None)) | (Deal.expiry_date > datetime.utcnow())
+            ).count()
+            
             return stats
+        finally:
+            session.close()
+    
+    def mark_deal_as_expired(self, deal_id):
+        """Mark a deal as expired by setting expiry_date to past"""
+        session = self.get_session()
+        try:
+            from datetime import datetime, timedelta
+            deal = session.query(Deal).filter(Deal.id == deal_id).first()
+            if deal:
+                deal.expiry_date = datetime.utcnow() - timedelta(days=1)
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error marking deal as expired: {e}")
+            raise
+        finally:
+            session.close()
+    
+    def get_expired_deals_count(self):
+        """Get count of expired deals"""
+        session = self.get_session()
+        try:
+            from datetime import datetime
+            return session.query(Deal).filter(
+                Deal.is_active == True,
+                ((Deal.title.ilike('%expired%')) | 
+                 (Deal.title.ilike('%(expired)%')) |
+                 ((Deal.expiry_date.isnot(None)) & (Deal.expiry_date <= datetime.utcnow())))
+            ).count()
         finally:
             session.close()

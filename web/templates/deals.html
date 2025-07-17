@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}All Deals - OzBargain Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-list"></i> All Deals</h1>
+            <div>
+                <span class="text-muted">Page {{ page }}</span>
+            </div>
+        </div>
+
+        {% if deals %}
+            <div class="row">
+                {% for deal in deals %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card deal-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <a href="{{ deal.url }}" target="_blank" class="text-decoration-none">
+                                        {{ deal.title }}
+                                    </a>
+                                </h6>
+                                
+                                {% if deal.description %}
+                                    <p class="card-text text-muted small">
+                                        {{ deal.description[:100] }}{% if deal.description|length > 100 %}...{% endif %}
+                                    </p>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        {% if deal.store %}
+                                            <span class="badge bg-secondary">{{ deal.store }}</span>
+                                        {% endif %}
+                                        {% if deal.category %}
+                                            <span class="badge bg-info">{{ deal.category }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        {% if deal.price %}
+                                            <div class="deal-price">${{ deal.price }}</div>
+                                        {% endif %}
+                                        {% if deal.discount_percentage %}
+                                            <span class="discount-badge">{{ deal.discount_percentage }}% OFF</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">{{ deal.created_at|timeago }}</small>
+                                    <div>
+                                        {% if deal.votes > 0 %}
+                                            <span class="votes-positive"><i class="fas fa-thumbs-up"></i> {{ deal.votes }}</span>
+                                        {% elif deal.votes < 0 %}
+                                            <span class="votes-negative"><i class="fas fa-thumbs-down"></i> {{ deal.votes }}</span>
+                                        {% endif %}
+                                        {% if deal.comments_count > 0 %}
+                                            <span class="text-muted ms-2"><i class="fas fa-comments"></i> {{ deal.comments_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Deals pagination">
+                <ul class="pagination justify-content-center">
+                    {% if has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('deals', page=page-1) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </span>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ page }}</span>
+                    </li>
+                    
+                    {% if has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('deals', page=page+1) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% else %}
+            <div class="text-center">
+                <div class="card">
+                    <div class="card-body">
+                        <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                        <h4>No Deals Found</h4>
+                        <p class="text-muted">The scraper may still be collecting data. Check back in a few minutes.</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

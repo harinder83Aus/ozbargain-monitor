@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}OzBargain Monitor - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Total Deals</h5>
+                                <h3>{{ stats.total_deals or 0 }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-shopping-bag fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Active Deals</h5>
+                                <h3>{{ stats.active_deals or 0 }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Search Terms</h5>
+                                <h3>{{ stats.search_terms or 0 }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-search fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Matched Deals</h5>
+                                <h3>{{ stats.matched_deals or 0 }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-bullseye fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matched Deals Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-bullseye"></i> Recent Matched Deals</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if matched_deals %}
+                            {% for deal in matched_deals %}
+                                <div class="deal-card border-bottom pb-3 mb-3">
+                                    <h6><a href="{{ deal.url }}" target="_blank" class="text-decoration-none">{{ deal.title }}</a></h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if deal.store %}
+                                                <span class="badge bg-secondary">{{ deal.store }}</span>
+                                            {% endif %}
+                                            {% if deal.category %}
+                                                <span class="badge bg-info">{{ deal.category }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            {% if deal.price %}
+                                                <span class="deal-price">${{ deal.price }}</span>
+                                            {% endif %}
+                                            {% if deal.discount_percentage %}
+                                                <span class="discount-badge">{{ deal.discount_percentage }}% OFF</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted">{{ deal.created_at|timeago }}</small>
+                                        <div>
+                                            {% if deal.votes > 0 %}
+                                                <span class="votes-positive"><i class="fas fa-thumbs-up"></i> {{ deal.votes }}</span>
+                                            {% elif deal.votes < 0 %}
+                                                <span class="votes-negative"><i class="fas fa-thumbs-down"></i> {{ deal.votes }}</span>
+                                            {% endif %}
+                                            {% if deal.comments_count > 0 %}
+                                                <span class="text-muted ms-2"><i class="fas fa-comments"></i> {{ deal.comments_count }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div class="text-center">
+                                <a href="{{ url_for('matched_deals') }}" class="btn btn-primary btn-sm">View All Matched Deals</a>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No matched deals yet. <a href="{{ url_for('search_terms') }}">Add search terms</a> to start matching deals.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Deals Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-clock"></i> Recent Deals</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_deals %}
+                            {% for deal in recent_deals %}
+                                <div class="deal-card border-bottom pb-3 mb-3">
+                                    <h6><a href="{{ deal.url }}" target="_blank" class="text-decoration-none">{{ deal.title }}</a></h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if deal.store %}
+                                                <span class="badge bg-secondary">{{ deal.store }}</span>
+                                            {% endif %}
+                                            {% if deal.category %}
+                                                <span class="badge bg-info">{{ deal.category }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            {% if deal.price %}
+                                                <span class="deal-price">${{ deal.price }}</span>
+                                            {% endif %}
+                                            {% if deal.discount_percentage %}
+                                                <span class="discount-badge">{{ deal.discount_percentage }}% OFF</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted">{{ deal.created_at|timeago }}</small>
+                                        <div>
+                                            {% if deal.votes > 0 %}
+                                                <span class="votes-positive"><i class="fas fa-thumbs-up"></i> {{ deal.votes }}</span>
+                                            {% elif deal.votes < 0 %}
+                                                <span class="votes-negative"><i class="fas fa-thumbs-down"></i> {{ deal.votes }}</span>
+                                            {% endif %}
+                                            {% if deal.comments_count > 0 %}
+                                                <span class="text-muted ms-2"><i class="fas fa-comments"></i> {{ deal.comments_count }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div class="text-center">
+                                <a href="{{ url_for('deals') }}" class="btn btn-primary btn-sm">View All Deals</a>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No deals found. The scraper may still be collecting data.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh statistics every 5 minutes
+    setInterval(function() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update statistics if needed
+                console.log('Stats updated:', data);
+            })
+            .catch(error => console.error('Error updating stats:', error));
+    }, 300000); // 5 minutes
+</script>
+{% endblock %}

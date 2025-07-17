@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Scraping Logs - OzBargain Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1><i class="fas fa-history"></i> Scraping Logs</h1>
+        <p class="text-muted">Monitor the scraping activity and performance.</p>
+
+        {% if logs %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Type</th>
+                                    <th>Source</th>
+                                    <th>Found</th>
+                                    <th>New</th>
+                                    <th>Updated</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>
+                                        <small>{{ log.created_at|datetime }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ log.scrape_type }}</span>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            <a href="{{ log.source_url }}" target="_blank" class="text-decoration-none">
+                                                {{ log.source_url|truncate(40) }}
+                                            </a>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ log.deals_found }}</span>
+                                    </td>
+                                    <td>
+                                        {% if log.new_deals > 0 %}
+                                            <span class="badge bg-success">{{ log.new_deals }}</span>
+                                        {% else %}
+                                            <span class="text-muted">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.updated_deals > 0 %}
+                                            <span class="badge bg-warning">{{ log.updated_deals }}</span>
+                                        {% else %}
+                                            <span class="text-muted">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ log.scrape_duration }}s</small>
+                                    </td>
+                                    <td>
+                                        {% if log.status == 'success' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Success
+                                            </span>
+                                        {% elif log.status == 'error' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> Error
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> {{ log.status|title }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if log.error_message %}
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="alert alert-danger alert-sm mb-0">
+                                            <strong>Error:</strong> {{ log.error_message }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center">
+                <div class="card">
+                    <div class="card-body">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h4>No Scraping Logs Yet</h4>
+                        <p class="text-muted">Scraping logs will appear here once the scraper starts running.</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh logs every 30 seconds
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}

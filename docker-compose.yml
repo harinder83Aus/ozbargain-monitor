@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: ozbargain_db
+    environment:
+      POSTGRES_DB: ozbargain_monitor
+      POSTGRES_USER: ozbargain_user
+      POSTGRES_PASSWORD: ozbargain_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ozbargain_user -d ozbargain_monitor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: 
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: ozbargain_web
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://ozbargain_user:ozbargain_password@postgres:5432/ozbargain_monitor
+      - FLASK_ENV=production
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    volumes:
+      - ./web:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper:
+    build:
+      context: ./scraper
+      dockerfile: Dockerfile
+    container_name: ozbargain_scraper
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://ozbargain_user:ozbargain_password@postgres:5432/ozbargain_monitor
+      - SCRAPE_INTERVAL=6
+    restart: unless-stopped
+    volumes:
+      - ./scraper:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:

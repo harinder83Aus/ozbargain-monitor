@@ -58,15 +58,15 @@ sudo usermod -aG docker $USER
 ```
 
 #### 2. Install Docker Compose
+Docker Compose v2 is now installed as a Docker plugin. If you have Docker Desktop or a recent Docker installation, it should already be available.
+
 ```bash
-# Download Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# Verify Docker Compose v2 installation
+docker compose version
 
-# Make it executable
-sudo chmod +x /usr/local/bin/docker-compose
-
-# Verify installation
-docker-compose --version
+# If not available, install Docker Compose v2 plugin
+sudo apt update
+sudo apt install docker-compose-plugin
 ```
 
 #### 3. Verify Docker Installation
@@ -157,20 +157,20 @@ cd ozbargain-monitor
 ### Manual Start
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Check service status
-docker-compose ps
+docker compose ps
 
 # View logs
-docker-compose logs
+docker compose logs
 ```
 
 ### Verification Steps
 
 1. **Check Container Status**
 ```bash
-docker-compose ps
+docker compose ps
 ```
 You should see:
 - `ozbargain_db` (postgres) - Up
@@ -180,7 +180,7 @@ You should see:
 2. **Health Checks**
 ```bash
 # Database health
-docker-compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor
+docker compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor
 
 # Web application health
 curl -f http://localhost:5000/health
@@ -200,28 +200,28 @@ curl -f http://localhost:8000/health
 ### Stop All Services
 ```bash
 cd ozbargain-monitor
-docker-compose down
+docker compose down
 ```
 
 ### Stop Individual Services
 ```bash
 # Stop web application only
-docker-compose stop web
+docker compose stop web
 
 # Stop scraper only
-docker-compose stop scraper
+docker compose stop scraper
 
 # Stop database only
-docker-compose stop postgres
+docker compose stop postgres
 ```
 
 ### Restart Services
 ```bash
 # Restart all services
-docker-compose restart
+docker compose restart
 
 # Restart individual service
-docker-compose restart web
+docker compose restart web
 ```
 
 ---
@@ -233,7 +233,7 @@ docker-compose restart web
 1. **Stop and Remove Containers**
 ```bash
 cd ozbargain-monitor
-docker-compose down -v
+docker compose down -v
 ```
 
 2. **Remove Docker Images**
@@ -259,7 +259,7 @@ rm -rf ozbargain-monitor
 If you want to keep your data but remove the application:
 ```bash
 # Stop containers but keep volumes
-docker-compose down
+docker compose down
 
 # Remove project files but keep database volume
 cd ..
@@ -382,16 +382,16 @@ sudo kill -9 PID
 **Solution**:
 ```bash
 # Check if PostgreSQL container is running
-docker-compose ps
+docker compose ps
 
 # Check database logs
-docker-compose logs postgres
+docker compose logs postgres
 
 # Restart database
-docker-compose restart postgres
+docker compose restart postgres
 
 # Wait for database to be ready
-docker-compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor
+docker compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor
 ```
 
 #### 3. No Deals Appearing
@@ -403,13 +403,13 @@ docker-compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor
 **Solution**:
 ```bash
 # Check scraper logs
-docker-compose logs scraper
+docker compose logs scraper
 
 # Check scraper health
 curl http://localhost:8000/health
 
 # Manually trigger scraping (restart scraper)
-docker-compose restart scraper
+docker compose restart scraper
 ```
 
 #### 4. Web Interface Not Loading
@@ -417,13 +417,13 @@ docker-compose restart scraper
 **Solution**:
 ```bash
 # Check if web container is running
-docker-compose ps
+docker compose ps
 
 # Check web application logs
-docker-compose logs web
+docker compose logs web
 
 # Restart web application
-docker-compose restart web
+docker compose restart web
 
 # Check if port is accessible
 curl http://localhost:5000/health
@@ -462,7 +462,7 @@ df -h
 #### Web Application Logs
 ```bash
 # View web logs
-docker-compose logs web
+docker compose logs web
 
 # Common log messages:
 # - "Database connection established" (Good)
@@ -473,7 +473,7 @@ docker-compose logs web
 #### Scraper Logs
 ```bash
 # View scraper logs
-docker-compose logs scraper
+docker compose logs scraper
 
 # Common log messages:
 # - "Scraping completed: X new, Y updated" (Good)
@@ -484,7 +484,7 @@ docker-compose logs scraper
 #### Database Logs
 ```bash
 # View database logs
-docker-compose logs postgres
+docker compose logs postgres
 
 # Common log messages:
 # - "database system is ready to accept connections" (Good)
@@ -525,17 +525,17 @@ To change scraping frequency:
 SCRAPE_INTERVAL=3  # Scrape every 3 hours instead of 6
 
 # Restart scraper
-docker-compose restart scraper
+docker compose restart scraper
 ```
 
 ### Database Backup
 
 ```bash
 # Create backup
-docker-compose exec postgres pg_dump -U ozbargain_user ozbargain_monitor > backup.sql
+docker compose exec postgres pg_dump -U ozbargain_user ozbargain_monitor > backup.sql
 
 # Restore backup
-docker-compose exec -T postgres psql -U ozbargain_user -d ozbargain_monitor < backup.sql
+docker compose exec -T postgres psql -U ozbargain_user -d ozbargain_monitor < backup.sql
 ```
 
 ### Performance Tuning

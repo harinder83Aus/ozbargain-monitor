@@ -23,22 +23,22 @@ cd ozbargain-monitor
 ### Running the Application
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Check status
-docker-compose ps
+docker compose ps
 
 # View logs
-docker-compose logs
+docker compose logs
 ```
 
 ### Stopping the Application
 ```bash
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop specific service
-docker-compose stop web
+docker compose stop web
 ```
 
 ### Troubleshooting
@@ -48,24 +48,24 @@ curl http://localhost:5000/health
 curl http://localhost:8000/health
 
 # View specific service logs
-docker-compose logs web
-docker-compose logs scraper
-docker-compose logs postgres
+docker compose logs web
+docker compose logs scraper
+docker compose logs postgres
 
 # Restart services
-docker-compose restart
+docker compose restart
 ```
 
 ### Database Operations
 ```bash
 # Connect to database
-docker-compose exec postgres psql -U ozbargain_user -d ozbargain_monitor
+docker compose exec postgres psql -U ozbargain_user -d ozbargain_monitor
 
 # Backup database
-docker-compose exec postgres pg_dump -U ozbargain_user ozbargain_monitor > backup.sql
+docker compose exec postgres pg_dump -U ozbargain_user ozbargain_monitor > backup.sql
 
 # Restore database
-docker-compose exec -T postgres psql -U ozbargain_user -d ozbargain_monitor < backup.sql
+docker compose exec -T postgres psql -U ozbargain_user -d ozbargain_monitor < backup.sql
 ```
 
 ## 🔗 Important URLs
@@ -87,25 +87,25 @@ docker-compose exec -T postgres psql -U ozbargain_user -d ozbargain_monitor < ba
 curl -s http://localhost:5000/health | jq
 
 # Check all container status
-docker-compose ps --services --filter "status=running"
+docker compose ps --services --filter "status=running"
 
 # View recent logs
-docker-compose logs --tail=50 --follow
+docker compose logs --tail=50 --follow
 
 # Clean restart
-docker-compose down && docker-compose up -d
+docker compose down && docker compose up -d
 
 # Update from GitHub
-git pull origin main && docker-compose up -d --build
+git pull origin main && docker compose up -d --build
 ```
 
 ## 🆘 Emergency Commands
 ```bash
 # Force stop all containers
-docker-compose kill
+docker compose kill
 
 # Remove all containers and volumes
-docker-compose down -v
+docker compose down -v
 
 # Clean Docker system
 docker system prune -a
@@ -120,8 +120,8 @@ docker system df
 docker stats
 
 # Service logs in real-time
-docker-compose logs -f scraper
+docker compose logs -f scraper
 
 # Database connections
-docker-compose exec postgres psql -U ozbargain_user -d ozbargain_monitor -c "SELECT * FROM pg_stat_activity;"
+docker compose exec postgres psql -U ozbargain_user -d ozbargain_monitor -c "SELECT * FROM pg_stat_activity;"
 ```

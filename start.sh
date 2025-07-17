@@ -13,7 +13,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
+if ! docker compose version &> /dev/null; then
     echo "❌ Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
@@ -32,11 +32,11 @@ chmod +x start.sh
 
 # Stop any existing containers
 echo "🛑 Stopping existing containers..."
-docker-compose down
+docker compose down
 
 # Build and start containers
 echo "🏗️ Building and starting containers..."
-docker-compose up -d
+docker compose up -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
@@ -46,7 +46,7 @@ sleep 10
 echo "🔍 Checking service health..."
 
 # Check database
-if docker-compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor &> /dev/null; then
+if docker compose exec postgres pg_isready -U ozbargain_user -d ozbargain_monitor &> /dev/null; then
     echo "✅ Database is ready"
 else
     echo "❌ Database health check failed"
@@ -73,9 +73,9 @@ echo "📊 Web Dashboard: http://localhost:5000"
 echo "🔧 Scraper Status: http://localhost:8000/status"
 echo ""
 echo "📋 Useful commands:"
-echo "   View logs: docker-compose logs"
-echo "   Stop services: docker-compose down"
-echo "   Restart services: docker-compose restart"
+echo "   View logs: docker compose logs"
+echo "   Stop services: docker compose down"
+echo "   Restart services: docker compose restart"
 echo ""
 echo "💡 Next steps:"
 echo "   1. Open http://localhost:5000 in your browser"

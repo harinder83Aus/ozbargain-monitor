@@ -86,6 +86,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                 
                 script {
                     try {
+                        // Stop any running containers with the same names
+                        sh '''
+                            docker stop ozbargain_web ozbargain_db ozbargain_scraper ozbargain_matcher 2>/dev/null || true
+                            docker rm ozbargain_web ozbargain_db ozbargain_scraper ozbargain_matcher 2>/dev/null || true
+                        '''
+                        
+                        // Stop via docker compose
                         sh 'docker compose -f ${DOCKER_COMPOSE_FILE} down'
                         echo '✅ Stack stopped successfully'
                     } catch (Exception e) {

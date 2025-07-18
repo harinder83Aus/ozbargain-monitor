@@ -168,13 +168,34 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                         // Create backup directory
                         sh 'mkdir -p ./backups'
                         
-                        // Create pre-deployment backup
-                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/database/backup.py backup --type pre-deployment --backup-dir /app/backups'
+                        // Wait for web container to be fully ready
+                        echo 'Waiting for web container to be fully ready...'
+                        sleep(time: 15, unit: 'SECONDS')
                         
-                        // Copy backup to host for safekeeping
-                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} cp web:/app/backups/. ./backups/'
+                        // Retry logic for backup
+                        def maxRetries = 3
+                        def retryCount = 0
+                        def backupSuccess = false
                         
-                        echo '✅ Pre-deployment backup completed'
+                        while (retryCount < maxRetries && !backupSuccess) {
+                            try {
+                                sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/database/backup.py backup --type pre-deployment --backup-dir /app/backups'
+                                backupSuccess = true
+                                echo '✅ Pre-deployment backup completed'
+                            } catch (Exception e) {
+                                retryCount++
+                                echo "Backup attempt ${retryCount} failed, retrying in 10 seconds..."
+                                sleep(time: 10, unit: 'SECONDS')
+                            }
+                        }
+                        
+                        if (backupSuccess) {
+                            // Copy backup to host for safekeeping
+                            sh 'docker compose -f ${DOCKER_COMPOSE_FILE} cp web:/app/backups/. ./backups/ || true'
+                        } else {
+                            echo "⚠️ All backup attempts failed, proceeding without backup"
+                        }
+                        
                     } catch (Exception e) {
                         echo "⚠️ Backup failed, proceeding with caution: ${e.getMessage()}"
                         // Don't fail the pipeline for backup issues, but log it
@@ -188,12 +209,26 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                 echo '🔧 Running database migrations...'
                 
                 script {
-                    try {
-                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/migrate.py'
-                        echo '✅ Database migrations completed successfully'
-                    } catch (Exception e) {
-                        echo "❌ Migration failed: ${e.getMessage()}"
-                        throw e
+                    // Retry logic for migrations
+                    def maxRetries = 3
+                    def retryCount = 0
+                    def migrationSuccess = false
+                    
+                    while (retryCount < maxRetries && !migrationSuccess) {
+                        try {
+                            sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/migrate.py'
+                            migrationSuccess = true
+                            echo '✅ Database migrations completed successfully'
+                        } catch (Exception e) {
+                            retryCount++
+                            if (retryCount < maxRetries) {
+                                echo "Migration attempt ${retryCount} failed, retrying in 10 seconds..."
+                                sleep(time: 10, unit: 'SECONDS')
+                            } else {
+                                echo "❌ Migration failed after ${maxRetries} attempts: ${e.getMessage()}"
+                                throw e
+                            }
+                        }
                     }
                 }
             }

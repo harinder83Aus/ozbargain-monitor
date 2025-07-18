@@ -44,12 +44,12 @@ pipeline {
             }
         }
         
-        stage('📝 Git Commit & Push') {
+        stage('📝 Git Commit (Local)') {
             when {
                 expression { env.HAS_CHANGES == 'true' }
             }
             steps {
-                echo '📝 Committing and pushing changes...'
+                echo '📝 Committing changes locally...'
                 
                 script {
                     // Add all changes
@@ -68,18 +68,14 @@ Auto-generated commit from Jenkins CI pipeline
 
 Co-Authored-By: Claude <noreply@anthropic.com>"""
                     
-                    // Commit changes
+                    // Commit changes locally only
                     sh """
+                        git checkout main || git checkout -b main
                         git commit -m '${commitMessage}' || echo 'No changes to commit'
                     """
                     
-                    // Push to remote (handle detached HEAD)
-                    sh '''
-                        git checkout main || git checkout -b main
-                        git push origin main
-                    '''
-                    
-                    echo '✅ Changes committed and pushed successfully'
+                    echo '✅ Changes committed locally (skipping push for local development)'
+                    echo '💡 To push manually later: git push origin main'
                 }
             }
         }
@@ -342,7 +338,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
         success {
             echo '''
 🎉 ===== DEPLOYMENT SUCCESSFUL =====
-✅ Git changes committed and pushed
+✅ Git changes committed locally
 ✅ Docker stack restarted successfully  
 ✅ All health checks passed
 ✅ System is ready for use
@@ -353,6 +349,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
    - Database: localhost:5432
 
 📊 Check the system status report above for details.
+💡 To push changes to GitHub: git push origin main
 =====================================
             '''
         }

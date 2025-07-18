@@ -189,3 +189,6 @@ htmlcov/
 # Backups
 *.sql
 backup_*
+
+# Jenkins artifacts
+deployment-logs.txt

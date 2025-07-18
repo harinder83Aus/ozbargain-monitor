@@ -16,6 +16,30 @@ CREATE INDEX IF NOT EXISTS idx_deals_expiry_status ON deals(expiry_date, last_ch
 -- Add comment to document the column purpose
 COMMENT ON COLUMN deals.last_checked IS 'Timestamp when deal was last checked for expiry status via URL content verification';
 
+-- Update the trigger function to use the new column
+CREATE OR REPLACE FUNCTION trigger_expired_check_for_deal(deal_url TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    deal_count INTEGER;
+BEGIN
+    -- Check if deal exists
+    SELECT COUNT(*) INTO deal_count 
+    FROM deals 
+    WHERE url = deal_url;
+    
+    IF deal_count > 0 THEN
+        -- Reset last_checked to force re-checking
+        UPDATE deals 
+        SET last_checked = NULL 
+        WHERE url = deal_url;
+        
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Record migration
 INSERT INTO schema_migrations (migration_name, checksum) 
 VALUES ('004_add_last_checked_column', '004_last_checked_v1') 

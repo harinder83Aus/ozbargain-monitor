@@ -7,7 +7,7 @@ BEGIN;
 -- Remove any hardcoded expired deals from the old system
 -- We'll let the smart checker handle these dynamically
 UPDATE deals 
-SET expiry_date = NULL, last_checked = NULL
+SET expiry_date = NULL
 WHERE url = 'https://www.ozbargain.com.au/node/912724'
   AND expiry_date = '2025-01-17'::timestamp;
 
@@ -23,11 +23,8 @@ BEGIN
     WHERE url = deal_url;
     
     IF deal_count > 0 THEN
-        -- Reset last_checked to force re-checking
-        UPDATE deals 
-        SET last_checked = NULL 
-        WHERE url = deal_url;
-        
+        -- Reset last_checked to force re-checking (if column exists)
+        -- This will be handled by migration 004
         RETURN TRUE;
     ELSE
         RETURN FALSE;

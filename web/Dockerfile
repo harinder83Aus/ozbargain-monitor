@@ -14,8 +14,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Copy migration runner from database directory
+COPY ../database/migrate.py /app/migrate.py
+COPY ../database/migrations /app/migrations
+
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
+
 # Expose port
 EXPOSE 5000
 
-# Run the web application
-CMD ["python", "app.py"]
+# Use entrypoint script that runs migrations first
+CMD ["./entrypoint.sh"]

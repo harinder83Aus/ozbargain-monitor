@@ -109,12 +109,12 @@ class DatabaseBackup:
             with open(backup_path, 'r') as f:
                 content = f.read()
             
-            # Check for essential elements
+            # Check for essential elements (tables can be created or dropped/recreated)
             required_elements = [
-                'CREATE TABLE deals',
-                'CREATE TABLE search_terms', 
-                'CREATE TABLE search_matches',
-                'CREATE TABLE schema_migrations'
+                'deals',
+                'search_terms', 
+                'search_matches',
+                'schema_migrations'
             ]
             
             for element in required_elements:

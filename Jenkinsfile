@@ -14,6 +14,7 @@ pipeline {
         GIT_COMMITTER_EMAIL = 'jenkins@ozbargain-monitor.local'
         GIT_AUTHOR_NAME = 'Jenkins CI'
         GIT_AUTHOR_EMAIL = 'jenkins@ozbargain-monitor.local'
+        WORKSPACE_DIR = "${WORKSPACE}"
     }
     
     stages {
@@ -72,8 +73,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                         git commit -m '${commitMessage}' || echo 'No changes to commit'
                     """
                     
-                    // Push to remote
-                    sh 'git push origin main'
+                    // Push to remote (handle detached HEAD)
+                    sh '''
+                        git checkout main || git checkout -b main
+                        git push origin main
+                    '''
                     
                     echo '✅ Changes committed and pushed successfully'
                 }

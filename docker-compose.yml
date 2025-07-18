@@ -36,6 +36,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./web:/app
+      - ./shared:/app/shared
       - ./database/migrate.py:/app/migrate.py
       - ./database/migrations:/app/migrations
       - ./database:/app/database
@@ -63,6 +64,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./scraper:/app
+      - ./shared:/app/shared
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
       interval: 30s
@@ -83,6 +85,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./matcher:/app
+      - ./shared:/app/shared
 
 volumes:
   postgres_data:

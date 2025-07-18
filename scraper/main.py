@@ -10,16 +10,17 @@ from flask import Flask, jsonify
 from database import DatabaseManager
 from ozbargain_scraper import OzBargainScraper
 
+# Load environment variables
+load_dotenv()
+
 # Add database directory to Python path for expired checker
 sys.path.append('/app/database')
+ExpiredDealChecker = None
 try:
     from expired_checker import ExpiredDealChecker
 except ImportError:
-    logger.warning("ExpiredDealChecker not available - expired checking disabled")
+    # Logger not configured yet, will warn later
     ExpiredDealChecker = None
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -69,7 +70,7 @@ def initialize_services():
         expired_checker = ExpiredDealChecker(database_url)
         logger.info("Expired deal checker initialized successfully")
     else:
-        logger.warning("Expired deal checker not available")
+        logger.warning("ExpiredDealChecker not available - expired checking disabled")
 
 def run_scraping_job():
     """Run the scraping job"""

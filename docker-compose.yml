@@ -36,6 +36,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./web:/app
+      - ./database/migrate.py:/app/migrate.py
+      - ./database/migrations:/app/migrations
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s

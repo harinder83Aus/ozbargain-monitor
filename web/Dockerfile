@@ -14,9 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy migration runner from database directory
-COPY ../database/migrate.py /app/migrate.py
-COPY ../database/migrations /app/migrations
+# Copy migration runner from database directory (will be mounted via compose)
+# Migration files will be available via volume mounts
 
 # Make entrypoint executable
 RUN chmod +x entrypoint.sh

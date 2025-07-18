@@ -187,8 +187,9 @@ coverage/
 htmlcov/
 
 # Backups
-*.sql
+backups/*.sql
 backup_*
+!backups/.gitkeep
 
 # Jenkins artifacts
 deployment-logs.txt

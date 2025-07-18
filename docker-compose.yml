@@ -38,6 +38,9 @@ services:
       - ./web:/app
       - ./database/migrate.py:/app/migrate.py
       - ./database/migrations:/app/migrations
+      - ./database:/app/database
+      - ./backups:/app/backups
+      - ./scripts:/app/scripts
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s

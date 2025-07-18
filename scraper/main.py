@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import schedule
 import time
@@ -8,6 +9,14 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify
 from database import DatabaseManager
 from ozbargain_scraper import OzBargainScraper
+
+# Add database directory to Python path for expired checker
+sys.path.append('/app/database')
+try:
+    from expired_checker import ExpiredDealChecker
+except ImportError:
+    logger.warning("ExpiredDealChecker not available - expired checking disabled")
+    ExpiredDealChecker = None
 
 # Load environment variables
 load_dotenv()
@@ -25,10 +34,11 @@ app = Flask(__name__)
 # Global variables
 db_manager = None
 scraper = None
+expired_checker = None
 
 def initialize_services():
     """Initialize database and scraper services"""
-    global db_manager, scraper
+    global db_manager, scraper, expired_checker
     
     database_url = os.getenv('DATABASE_URL')
     if not database_url:
@@ -53,6 +63,13 @@ def initialize_services():
     # Initialize scraper
     scraper = OzBargainScraper(db_manager)
     logger.info("Scraper initialized successfully")
+    
+    # Initialize expired deal checker if available
+    if ExpiredDealChecker:
+        expired_checker = ExpiredDealChecker(database_url)
+        logger.info("Expired deal checker initialized successfully")
+    else:
+        logger.warning("Expired deal checker not available")
 
 def run_scraping_job():
     """Run the scraping job"""
@@ -71,6 +88,28 @@ def run_scraping_job():
     except Exception as e:
         logger.error(f"Error in scraping job: {e}")
 
+def run_expired_check_job():
+    """Run the expired deal checking job"""
+    try:
+        if not expired_checker:
+            logger.debug("Expired deal checker not available, skipping")
+            return
+            
+        logger.info("Starting expired deal check job")
+        
+        # Check up to 50 deals per run, focusing on deals not checked in last 24 hours
+        results = expired_checker.run_expiry_check(limit=50, hours_since_check=24)
+        
+        if results:
+            expired_count = sum(1 for r in results if r['is_expired'])
+            active_count = sum(1 for r in results if not r['is_expired'])
+            logger.info(f"Expired check completed: {expired_count} expired, {active_count} active deals checked")
+        else:
+            logger.info("No deals needed expiry checking")
+        
+    except Exception as e:
+        logger.error(f"Error in expired deal check job: {e}")
+
 def schedule_scraping_jobs():
     """Schedule scraping jobs"""
     scrape_interval = int(os.getenv('SCRAPE_INTERVAL', 6))
@@ -78,10 +117,13 @@ def schedule_scraping_jobs():
     # Schedule scraping every N hours
     schedule.every(scrape_interval).hours.do(run_scraping_job)
     
+    # Schedule expired deal checking every 2 hours (offset from scraping)
+    schedule.every(2).hours.do(run_expired_check_job)
+    
     # Also run immediately on startup
     schedule.every().minute.do(run_scraping_job).tag('startup')
     
-    logger.info(f"Scheduled scraping every {scrape_interval} hours")
+    logger.info(f"Scheduled scraping every {scrape_interval} hours and expired checking every 2 hours")
     
     while True:
         schedule.run_pending()
@@ -128,6 +170,7 @@ def status():
         from database import Deal
         total_deals = session.query(Deal).count()
         active_deals = session.query(Deal).filter(Deal.is_active == True).count()
+        expired_deals = session.query(Deal).filter(Deal.expiry_date.isnot(None)).count()
         
         # Get search terms count
         from database import SearchTerm
@@ -141,7 +184,9 @@ def status():
             'stats': {
                 'total_deals': total_deals,
                 'active_deals': active_deals,
-                'search_terms': search_terms_count
+                'expired_deals': expired_deals,
+                'search_terms': search_terms_count,
+                'expired_checker_enabled': expired_checker is not None
             },
             'recent_logs': [
                 {

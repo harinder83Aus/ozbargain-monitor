@@ -159,6 +159,30 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
             }
         }
         
+        stage('💾 Pre-deployment Backup') {
+            steps {
+                echo '💾 Creating pre-deployment database backup...'
+                
+                script {
+                    try {
+                        // Create backup directory
+                        sh 'mkdir -p ./backups'
+                        
+                        // Create pre-deployment backup
+                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/database/backup.py backup --type pre-deployment --backup-dir /app/backups'
+                        
+                        // Copy backup to host for safekeeping
+                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} cp web:/app/backups/. ./backups/'
+                        
+                        echo '✅ Pre-deployment backup completed'
+                    } catch (Exception e) {
+                        echo "⚠️ Backup failed, proceeding with caution: ${e.getMessage()}"
+                        // Don't fail the pipeline for backup issues, but log it
+                    }
+                }
+            }
+        }
+        
         stage('🔧 Run Database Migrations') {
             steps {
                 echo '🔧 Running database migrations...'
@@ -169,6 +193,30 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                         echo '✅ Database migrations completed successfully'
                     } catch (Exception e) {
                         echo "❌ Migration failed: ${e.getMessage()}"
+                        throw e
+                    }
+                }
+            }
+        }
+        
+        stage('🔍 Data Integrity Verification') {
+            steps {
+                echo '🔍 Verifying data integrity post-migration...'
+                
+                script {
+                    try {
+                        def result = sh(
+                            script: 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/database/backup.py verify',
+                            returnStdout: true
+                        ).trim()
+                        
+                        echo "Data integrity verification results:"
+                        echo result
+                        
+                        echo '✅ Data integrity verification passed'
+                    } catch (Exception e) {
+                        echo "❌ Data integrity verification failed: ${e.getMessage()}"
+                        // This is critical - we should know if our data is corrupted
                         throw e
                     }
                 }
@@ -322,6 +370,30 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                     sh 'docker system df'
                     
                     echo '✅ System status report completed'
+                }
+            }
+        }
+        
+        stage('💾 Post-deployment Backup & Cleanup') {
+            steps {
+                echo '💾 Creating post-deployment backup and cleanup...'
+                
+                script {
+                    try {
+                        // Create post-deployment backup
+                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/database/backup.py backup --type post-deployment --backup-dir /app/backups'
+                        
+                        // Copy backup to host
+                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} cp web:/app/backups/. ./backups/'
+                        
+                        // Clean up old backups (keep last 10)
+                        sh 'docker compose -f ${DOCKER_COMPOSE_FILE} exec -T web python /app/database/backup.py cleanup --backup-dir /app/backups'
+                        
+                        echo '✅ Post-deployment backup and cleanup completed'
+                    } catch (Exception e) {
+                        echo "⚠️ Post-deployment backup failed: ${e.getMessage()}"
+                        // Non-critical for pipeline success, but should be logged
+                    }
                 }
             }
         }

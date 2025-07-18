@@ -5,12 +5,12 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        <h1 class="page-header"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
         
         <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card bg-primary text-white">
+                <div class="card stats-card-primary text-white">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-success text-white">
+                <div class="card stats-card-success text-white">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-info text-white">
+                <div class="card stats-card-info text-white">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
@@ -55,7 +55,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-warning text-white">
+                <div class="card stats-card-warning text-white">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
@@ -86,10 +86,10 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             {% if deal.store %}
-                                                <span class="badge bg-secondary">{{ deal.store }}</span>
+                                                <span class="badge badge-store">{{ deal.store }}</span>
                                             {% endif %}
                                             {% if deal.category %}
-                                                <span class="badge bg-info">{{ deal.category }}</span>
+                                                <span class="badge badge-category">{{ deal.category }}</span>
                                             {% endif %}
                                         </div>
                                         <div class="text-end">
@@ -117,7 +117,7 @@
                                 </div>
                             {% endfor %}
                             <div class="text-center">
-                                <a href="{{ url_for('matched_deals') }}" class="btn btn-primary btn-sm">View All Matched Deals</a>
+                                <a href="{{ url_for('matched_deals') }}" class="btn btn-ozbargain btn-sm">View All Matched Deals</a>
                             </div>
                         {% else %}
                             <p class="text-muted text-center">No matched deals yet. <a href="{{ url_for('search_terms') }}">Add search terms</a> to start matching deals.</p>
@@ -140,10 +140,10 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             {% if deal.store %}
-                                                <span class="badge bg-secondary">{{ deal.store }}</span>
+                                                <span class="badge badge-store">{{ deal.store }}</span>
                                             {% endif %}
                                             {% if deal.category %}
-                                                <span class="badge bg-info">{{ deal.category }}</span>
+                                                <span class="badge badge-category">{{ deal.category }}</span>
                                             {% endif %}
                                         </div>
                                         <div class="text-end">
@@ -171,7 +171,7 @@
                                 </div>
                             {% endfor %}
                             <div class="text-center">
-                                <a href="{{ url_for('deals') }}" class="btn btn-primary btn-sm">View All Deals</a>
+                                <a href="{{ url_for('deals') }}" class="btn btn-ozbargain btn-sm">View All Deals</a>
                             </div>
                         {% else %}
                             <p class="text-muted text-center">No deals found. The scraper may still be collecting data.</p>

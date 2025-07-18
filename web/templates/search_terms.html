@@ -6,8 +6,8 @@
 <div class="row">
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1><i class="fas fa-cogs"></i> Search Terms</h1>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSearchTermModal">
+            <h1 class="page-header"><i class="fas fa-cogs"></i> Search Terms</h1>
+            <button class="btn btn-ozbargain" data-bs-toggle="modal" data-bs-target="#addSearchTermModal">
                 <i class="fas fa-plus"></i> Add Search Term
             </button>
         </div>
@@ -37,9 +37,9 @@
                                     </td>
                                     <td>
                                         {% if term.is_active %}
-                                            <span class="badge bg-success">Active</span>
+                                            <span class="badge badge-ozbargain">Active</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">Inactive</span>
+                                            <span class="badge badge-store">Inactive</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -76,7 +76,7 @@
                         <i class="fas fa-search fa-3x text-muted mb-3"></i>
                         <h4>No Search Terms Yet</h4>
                         <p class="text-muted">Add search terms to start monitoring specific deals from OzBargain.</p>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSearchTermModal">
+                        <button class="btn btn-ozbargain" data-bs-toggle="modal" data-bs-target="#addSearchTermModal">
                             <i class="fas fa-plus"></i> Add Your First Search Term
                         </button>
                     </div>
@@ -110,7 +110,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Search Term</button>
+                    <button type="submit" class="btn btn-ozbargain">Add Search Term</button>
                 </div>
             </form>
         </div>

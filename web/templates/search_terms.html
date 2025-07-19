@@ -13,7 +13,15 @@
         </div>
 
         {% if search_terms %}
-            <div class="card">
+            {% set active_terms = search_terms | selectattr("is_active") | list %}
+            {% set inactive_terms = search_terms | rejectattr("is_active") | list %}
+            
+            <!-- Active Search Terms -->
+            {% if active_terms %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Active Search Terms ({{ active_terms|length }})</h5>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped">
@@ -21,13 +29,12 @@
                                 <tr>
                                     <th>Term</th>
                                     <th>Description</th>
-                                    <th>Status</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for term in search_terms %}
+                                {% for term in active_terms %}
                                 <tr>
                                     <td>
                                         <strong>{{ term.term }}</strong>
@@ -36,22 +43,14 @@
                                         {{ term.description or '-' }}
                                     </td>
                                     <td>
-                                        {% if term.is_active %}
-                                            <span class="badge badge-ozbargain">Active</span>
-                                        {% else %}
-                                            <span class="badge badge-store">Inactive</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
                                         {{ term.created_at|datetime }}
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <form method="POST" action="{{ url_for('toggle_search_term', term_id=term.id) }}" class="d-inline">
-                                                <input type="hidden" name="is_active" value="{{ 'false' if term.is_active else 'true' }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if term.is_active else 'success' }}">
-                                                    <i class="fas fa-{{ 'pause' if term.is_active else 'play' }}"></i>
-                                                    {{ 'Deactivate' if term.is_active else 'Activate' }}
+                                                <input type="hidden" name="is_active" value="false">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-pause"></i> Deactivate
                                                 </button>
                                             </form>
                                             <form method="POST" action="{{ url_for('delete_search_term', term_id=term.id) }}" 
@@ -69,6 +68,64 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
+            
+            <!-- Deactivated Search Terms -->
+            {% if inactive_terms %}
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-pause-circle"></i> Deactivated Search Terms ({{ inactive_terms|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> These search terms are deactivated and won't match new deals. You can reactivate them at any time.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Term</th>
+                                    <th>Description</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for term in inactive_terms %}
+                                <tr class="table-secondary">
+                                    <td>
+                                        <strong class="text-muted">{{ term.term }}</strong>
+                                    </td>
+                                    <td class="text-muted">
+                                        {{ term.description or '-' }}
+                                    </td>
+                                    <td class="text-muted">
+                                        {{ term.created_at|datetime }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <form method="POST" action="{{ url_for('toggle_search_term', term_id=term.id) }}" class="d-inline">
+                                                <input type="hidden" name="is_active" value="true">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-play"></i> Reactivate
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('delete_search_term', term_id=term.id) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Are you sure you want to permanently delete this search term?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         {% else %}
             <div class="text-center">
                 <div class="card">

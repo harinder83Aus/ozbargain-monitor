@@ -107,10 +107,13 @@ class BaseDatabaseManager:
     def create_tables(self):
         Base.metadata.create_all(bind=self.engine)
     
-    def get_search_terms(self):
+    def get_search_terms(self, include_inactive=False):
         session = self.get_session()
         try:
-            return session.query(SearchTerm).filter(SearchTerm.is_active == True).all()
+            if include_inactive:
+                return session.query(SearchTerm).order_by(SearchTerm.is_active.desc(), SearchTerm.created_at.desc()).all()
+            else:
+                return session.query(SearchTerm).filter(SearchTerm.is_active == True).order_by(SearchTerm.created_at.desc()).all()
         finally:
             session.close()
 

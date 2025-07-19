@@ -76,7 +76,7 @@ def deals():
 def search_terms():
     """Search terms management page"""
     try:
-        search_terms = db_manager.get_search_terms()
+        search_terms = db_manager.get_search_terms(include_inactive=True)
         return render_template('search_terms.html', search_terms=search_terms)
     except Exception as e:
         logger.error(f"Error loading search terms page: {e}")
@@ -109,14 +109,15 @@ def toggle_search_term(term_id):
     try:
         is_active = request.form.get('is_active') == 'true'
         
-        # Count existing matches before disabling
         if not is_active:
+            # Deactivating - purge existing matches
             purged_count = db_manager.purge_search_matches(term_id)
             db_manager.update_search_term(term_id, is_active=is_active)
             flash(f'Search term deactivated and {purged_count} matched deals purged', 'success')
         else:
+            # Reactivating - just update status, don't purge anything
             db_manager.update_search_term(term_id, is_active=is_active)
-            flash('Search term activated successfully', 'success')
+            flash('Search term reactivated successfully - new deals will be matched going forward', 'success')
         
     except Exception as e:
         logger.error(f"Error toggling search term: {e}")

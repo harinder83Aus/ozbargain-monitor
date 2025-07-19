@@ -164,6 +164,18 @@
                         <textarea class="form-control" id="description" name="description" rows="3"
                                   placeholder="Optional description to help you remember what this search is for"></textarea>
                     </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="search_now" name="search_now" value="true">
+                            <label class="form-check-label" for="search_now">
+                                <i class="fas fa-bolt text-warning"></i> <strong>Search Now</strong>
+                            </label>
+                            <div class="form-text">
+                                If checked, this search term will immediately look for matches in existing deals. 
+                                Otherwise, it will start matching new deals in 5 minutes.
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -182,6 +194,7 @@
     document.getElementById('addSearchTermModal').addEventListener('hidden.bs.modal', function () {
         document.getElementById('term').value = '';
         document.getElementById('description').value = '';
+        document.getElementById('search_now').checked = false;
     });
 </script>
 {% endblock %}

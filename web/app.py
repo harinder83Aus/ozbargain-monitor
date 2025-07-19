@@ -98,13 +98,28 @@ def add_search_term():
     try:
         term = request.form.get('term', '').strip()
         description = request.form.get('description', '').strip()
+        search_now = request.form.get('search_now') == 'true'
         
         if not term:
             flash('Search term cannot be empty', 'error')
             return redirect(url_for('search_terms'))
         
-        db_manager.add_search_term(term, description if description else None)
-        flash(f'Search term "{term}" added successfully', 'success')
+        # Add the search term with immediate search flag
+        new_term = db_manager.add_search_term(term, description if description else None, immediate_search=search_now)
+        
+        # If search_now is checked, run immediate matching
+        if search_now and new_term:
+            try:
+                matches_found = db_manager.run_immediate_matching(new_term.id)
+                if matches_found > 0:
+                    flash(f'Search term "{term}" added successfully and found {matches_found} matching deals immediately!', 'success')
+                else:
+                    flash(f'Search term "{term}" added successfully. No matching deals found in current inventory, but it will continue monitoring for new deals.', 'info')
+            except Exception as e:
+                logger.error(f"Error running immediate matching: {e}")
+                flash(f'Search term "{term}" added successfully, but immediate search failed: {str(e)}', 'warning')
+        else:
+            flash(f'Search term "{term}" added successfully. It will start matching new deals in 5 minutes.', 'success')
         
     except Exception as e:
         logger.error(f"Error adding search term: {e}")

@@ -383,13 +383,38 @@ class WebDatabaseManager(BaseDatabaseManager):
         finally:
             session.close()
     
-    def add_search_term(self, term, description=None):
+    def add_search_term(self, term, description=None, immediate_search=False):
         session = self.get_session()
         try:
             search_term = SearchTerm(term=term, description=description)
             session.add(search_term)
             session.commit()
-            return search_term
+            
+            # Get the ID and create a detached object to return
+            term_id = search_term.id
+            term_data = {
+                'id': search_term.id,
+                'term': search_term.term,
+                'description': search_term.description,
+                'is_active': search_term.is_active
+            }
+            
+            # If immediate search is requested, update the matching job to run now
+            if immediate_search:
+                # The trigger already created a job scheduled for 5 minutes from now
+                # Let's update it to run immediately
+                session.execute(
+                    text("UPDATE matching_jobs SET scheduled_at = NOW() WHERE search_term_id = :term_id AND status = 'pending'"),
+                    {'term_id': term_id}
+                )
+                session.commit()
+            
+            # Create a new detached object with the data
+            result_term = SearchTerm()
+            for key, value in term_data.items():
+                setattr(result_term, key, value)
+            
+            return result_term
         except Exception as e:
             session.rollback()
             raise e
@@ -509,6 +534,58 @@ class WebDatabaseManager(BaseDatabaseManager):
         except Exception as e:
             session.rollback()
             logger.error(f"Error purging search matches for term {search_term_id}: {e}")
+            raise
+        finally:
+            session.close()
+    
+    def run_immediate_matching(self, search_term_id):
+        """Run immediate matching for a search term using the same logic as matcher service"""
+        session = self.get_session()
+        try:
+            # Use the same SQL logic as the matcher service
+            sql = text("""
+                WITH deal_matches AS (
+                    SELECT 
+                        d.id as deal_id,
+                        :search_term_id as search_term_id,
+                        CASE 
+                            WHEN LOWER(d.title) LIKE '%' || LOWER(st.term) || '%' THEN 0.8
+                            WHEN LOWER(d.store) LIKE '%' || LOWER(st.term) || '%' THEN 0.5
+                            WHEN LOWER(d.description) LIKE '%' || LOWER(st.term) || '%' THEN 0.4
+                            ELSE 0.0
+                        END as match_score
+                    FROM deals d
+                    CROSS JOIN search_terms st
+                    WHERE d.is_active = true 
+                    AND st.is_active = true
+                    AND st.id = :search_term_id
+                    AND LOWER(d.title) NOT LIKE '%expired%'
+                    AND LOWER(d.title) NOT LIKE '%(expired)%'
+                    AND (d.expiry_date IS NULL OR d.expiry_date > NOW())
+                    AND (
+                        LOWER(d.title) LIKE '%' || LOWER(st.term) || '%' OR
+                        LOWER(d.store) LIKE '%' || LOWER(st.term) || '%' OR
+                        LOWER(d.description) LIKE '%' || LOWER(st.term) || '%'
+                    )
+                )
+                INSERT INTO search_matches (deal_id, search_term_id, match_score, created_at)
+                SELECT deal_id, search_term_id, match_score, NOW()
+                FROM deal_matches
+                WHERE match_score > 0.3
+                AND NOT EXISTS (
+                    SELECT 1 FROM search_matches sm 
+                    WHERE sm.deal_id = deal_matches.deal_id 
+                    AND sm.search_term_id = deal_matches.search_term_id
+                )
+            """)
+            
+            result = session.execute(sql, {'search_term_id': search_term_id})
+            session.commit()
+            return result.rowcount
+            
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error running immediate matching for search term {search_term_id}: {e}")
             raise
         finally:
             session.close()

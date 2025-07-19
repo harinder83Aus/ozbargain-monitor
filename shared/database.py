@@ -472,6 +472,21 @@ class WebDatabaseManager(BaseDatabaseManager):
             ).count()
         finally:
             session.close()
+    
+    def purge_search_matches(self, search_term_id):
+        """Purge all search matches for a specific search term"""
+        session = self.get_session()
+        try:
+            deleted_count = session.query(SearchMatch).filter(SearchMatch.search_term_id == search_term_id).count()
+            session.query(SearchMatch).filter(SearchMatch.search_term_id == search_term_id).delete()
+            session.commit()
+            return deleted_count
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error purging search matches for term {search_term_id}: {e}")
+            raise
+        finally:
+            session.close()
 
 # Compatibility aliases for backward compatibility
 DatabaseManager = WebDatabaseManager  # Default to web manager for backward compatibility

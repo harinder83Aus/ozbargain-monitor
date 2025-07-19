@@ -108,9 +108,15 @@ def toggle_search_term(term_id):
     """Toggle search term active status"""
     try:
         is_active = request.form.get('is_active') == 'true'
-        db_manager.update_search_term(term_id, is_active=is_active)
-        status = 'activated' if is_active else 'deactivated'
-        flash(f'Search term {status} successfully', 'success')
+        
+        # Count existing matches before disabling
+        if not is_active:
+            purged_count = db_manager.purge_search_matches(term_id)
+            db_manager.update_search_term(term_id, is_active=is_active)
+            flash(f'Search term deactivated and {purged_count} matched deals purged', 'success')
+        else:
+            db_manager.update_search_term(term_id, is_active=is_active)
+            flash('Search term activated successfully', 'success')
         
     except Exception as e:
         logger.error(f"Error toggling search term: {e}")
@@ -122,9 +128,11 @@ def toggle_search_term(term_id):
 def delete_search_term(term_id):
     """Delete a search term"""
     try:
+        # Count existing matches before deleting
+        purged_count = db_manager.purge_search_matches(term_id)
         success = db_manager.delete_search_term(term_id)
         if success:
-            flash('Search term deleted successfully', 'success')
+            flash(f'Search term deleted and {purged_count} matched deals purged', 'success')
         else:
             flash('Search term not found', 'error')
             

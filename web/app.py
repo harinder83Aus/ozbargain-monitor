@@ -46,13 +46,20 @@ def index():
 
 @app.route('/deals')
 def deals():
-    """All deals page"""
+    """All deals page with optional store filtering"""
     try:
         page = request.args.get('page', 1, type=int)
+        store_filter = request.args.get('store', '').strip()
         per_page = 20
         
-        # Get all deals with pagination
-        deals = db_manager.get_recent_deals(limit=per_page * page)
+        # Get available stores for the filter dropdown
+        available_stores = db_manager.get_available_stores(min_deals=2)
+        
+        # Get deals with optional store filter
+        if store_filter:
+            deals = db_manager.get_recent_deals(limit=per_page * page, store_filter=store_filter)
+        else:
+            deals = db_manager.get_recent_deals(limit=per_page * page)
         
         # Pagination logic (simple for now)
         start_idx = (page - 1) * per_page
@@ -66,11 +73,13 @@ def deals():
                              deals=page_deals,
                              page=page,
                              has_next=has_next,
-                             has_prev=has_prev)
+                             has_prev=has_prev,
+                             available_stores=available_stores,
+                             current_store_filter=store_filter)
     except Exception as e:
         logger.error(f"Error loading deals page: {e}")
         flash(f"Error loading deals: {str(e)}", 'error')
-        return render_template('deals.html', deals=[], page=1, has_next=False, has_prev=False)
+        return render_template('deals.html', deals=[], page=1, has_next=False, has_prev=False, available_stores=[], current_store_filter='')
 
 @app.route('/search-terms')
 def search_terms():

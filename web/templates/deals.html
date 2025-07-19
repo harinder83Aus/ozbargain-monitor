@@ -7,10 +7,49 @@
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1><i class="fas fa-list"></i> All Deals</h1>
-            <div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Store Filter -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="storeFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-store"></i> 
+                        {% if current_store_filter %}
+                            {{ current_store_filter }}
+                        {% else %}
+                            All Stores
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="storeFilterDropdown" style="max-height: 300px; overflow-y: auto;">
+                        <li>
+                            <a class="dropdown-item {% if not current_store_filter %}active{% endif %}" href="{{ url_for('deals') }}">
+                                <i class="fas fa-globe"></i> All Stores
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% for store, count in available_stores %}
+                        <li>
+                            <a class="dropdown-item {% if current_store_filter == store %}active{% endif %}" 
+                               href="{{ url_for('deals', store=store) }}">
+                                <span class="store-badge store-{{ store|lower|replace(' ', '-')|replace('(', '')|replace(')', '') }}">{{ store }}</span>
+                                <span class="text-muted ms-2">({{ count }})</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
                 <span class="text-muted">Page {{ page }}</span>
             </div>
         </div>
+        
+        {% if current_store_filter %}
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-filter"></i> Showing deals from: <strong>{{ current_store_filter }}</strong>
+            </div>
+            <a href="{{ url_for('deals') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-times"></i> Clear Filter
+            </a>
+        </div>
+        {% endif %}
 
         {% if deals %}
             <div class="row">
@@ -33,7 +72,10 @@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         {% if deal.store %}
-                                            <span class="badge bg-secondary">{{ deal.store }}</span>
+                                            {% set store_class = deal.store|lower|replace(' ', '-')|replace('(', '')|replace(')', '') %}
+                                            <span class="badge store-badge store-{{ store_class }}">
+                                                <i class="fas fa-store me-1"></i>{{ deal.store }}
+                                            </span>
                                         {% endif %}
                                         {% if deal.category %}
                                             <span class="badge bg-info">{{ deal.category }}</span>
@@ -73,7 +115,7 @@
                 <ul class="pagination justify-content-center">
                     {% if has_prev %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('deals', page=page-1) }}">
+                            <a class="page-link" href="{{ url_for('deals', page=page-1, store=current_store_filter if current_store_filter else none) }}">
                                 <i class="fas fa-chevron-left"></i> Previous
                             </a>
                         </li>
@@ -91,7 +133,7 @@
                     
                     {% if has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('deals', page=page+1) }}">
+                            <a class="page-link" href="{{ url_for('deals', page=page+1, store=current_store_filter if current_store_filter else none) }}">
                                 Next <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
@@ -120,4 +162,47 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* Store badge styling */
+.store-badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+}
+
+/* Popular store highlighting */
+.store-amazon-au { background: linear-gradient(135deg, #ff9900, #ff6600) !important; color: white !important; }
+.store-jb-hi { background: linear-gradient(135deg, #e50000, #cc0000) !important; color: white !important; }
+.store-costco { background: linear-gradient(135deg, #004c91, #003d75) !important; color: white !important; }
+.store-kmart { background: linear-gradient(135deg, #d40000, #b30000) !important; color: white !important; }
+.store-bunnings { background: linear-gradient(135deg, #0052cc, #004299) !important; color: white !important; }
+.store-harvey-norman { background: linear-gradient(135deg, #ff6b35, #ff4500) !important; color: white !important; }
+.store-officeworks { background: linear-gradient(135deg, #e31e24, #c01a20) !important; color: white !important; }
+.store-big-w { background: linear-gradient(135deg, #ff0040, #cc0033) !important; color: white !important; }
+.store-woolworths { background: linear-gradient(135deg, #0a7b3e, #086530) !important; color: white !important; }
+.store-coles { background: linear-gradient(135deg, #e60012, #cc000f) !important; color: white !important; }
+.store-steam { background: linear-gradient(135deg, #1b2838, #2a475e) !important; color: white !important; }
+.store-epic-games { background: linear-gradient(135deg, #0078f2, #0066cc) !important; color: white !important; }
+.store-shopback { background: linear-gradient(135deg, #9c4dcc, #7b1fa2) !important; color: white !important; }
+.store-playstation { background: linear-gradient(135deg, #003087, #00237d) !important; color: white !important; }
+.store-target { background: linear-gradient(135deg, #cc0000, #a60000) !important; color: white !important; }
+.store-the-good-guys { background: linear-gradient(135deg, #1976d2, #1565c0) !important; color: white !important; }
+.store-supercheap-auto { background: linear-gradient(135deg, #ff6900, #e55a00) !important; color: white !important; }
+
+/* Default store badge for unknown stores */
+.store-badge:not([class*="store-amazon"]):not([class*="store-jb"]):not([class*="store-costco"]):not([class*="store-kmart"]):not([class*="store-bunnings"]):not([class*="store-harvey"]):not([class*="store-officeworks"]):not([class*="store-big"]):not([class*="store-woolworths"]):not([class*="store-coles"]):not([class*="store-steam"]):not([class*="store-epic"]):not([class*="store-shopback"]):not([class*="store-playstation"]):not([class*="store-target"]):not([class*="store-good"]):not([class*="store-supercheap"]) {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    color: white !important;
+}
+
+/* Store badges in dropdown */
+.dropdown-menu .store-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+}
+</style>
 {% endblock %}

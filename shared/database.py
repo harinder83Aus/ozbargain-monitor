@@ -328,15 +328,36 @@ class MatcherDatabaseManager(BaseDatabaseManager):
 class WebDatabaseManager(BaseDatabaseManager):
     """Database manager for web service"""
     
-    def get_recent_deals(self, limit=50):
+    def get_recent_deals(self, limit=50, store_filter=None):
         session = self.get_session()
         try:
-            return session.query(Deal).filter(
+            query = session.query(Deal).filter(
                 Deal.is_active == True,
                 ~Deal.title.ilike('%expired%'),  # Exclude deals marked as expired
                 ~Deal.title.ilike('%(expired)%'),  # Also exclude deals with (expired) pattern
                 (Deal.expiry_date.is_(None)) | (Deal.expiry_date > datetime.utcnow())  # Exclude past expiry dates
-            ).order_by(desc(Deal.created_at)).limit(limit).all()
+            )
+            
+            # Add store filter if provided
+            if store_filter:
+                query = query.filter(Deal.store.ilike(f'%{store_filter}%'))
+            
+            return query.order_by(desc(Deal.created_at)).limit(limit).all()
+        finally:
+            session.close()
+    
+    def get_available_stores(self, min_deals=2):
+        """Get list of stores with at least min_deals active deals"""
+        session = self.get_session()
+        try:
+            return session.query(Deal.store, func.count(Deal.id).label('deal_count')).filter(
+                Deal.is_active == True,
+                Deal.store.isnot(None),
+                ~Deal.title.ilike('%expired%'),
+                ~Deal.title.ilike('%(expired)%'),
+                (Deal.expiry_date.is_(None)) | (Deal.expiry_date > datetime.utcnow()),
+                func.length(Deal.store) > 3  # Filter out truncated store names
+            ).group_by(Deal.store).having(func.count(Deal.id) >= min_deals).order_by(desc(func.count(Deal.id))).all()
         finally:
             session.close()
     

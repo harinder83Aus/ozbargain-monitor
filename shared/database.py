@@ -340,8 +340,9 @@ class WebDatabaseManager(BaseDatabaseManager):
     def get_matched_deals(self, search_term_id=None, limit=50):
         session = self.get_session()
         try:
-            query = session.query(Deal).join(SearchMatch).filter(
+            query = session.query(Deal).join(SearchMatch).join(SearchTerm).filter(
                 Deal.is_active == True,
+                SearchTerm.is_active == True,  # Only show matches for active search terms
                 ~Deal.title.ilike('%expired%'),  # Exclude deals marked as expired
                 ~Deal.title.ilike('%(expired)%')  # Also exclude deals with (expired) pattern
             )
